@@ -2,10 +2,17 @@ const socket = io()
 
 // const messageTemp = $('message-temp').html()
 const messageTemp = document.querySelector('#message-temp').innerHTML
+const locTemp = document.querySelector('#loc-temp').innerHTML
 
 socket.on('message', (message) => {
     console.log(message)
-    const html = Mustache.render(messageTemp)
+    const html = Mustache.render(messageTemp, {message: message.text, createdAt: moment(message.createdAt).format('h:mm A')})
+    $('#messages').append(html)
+})
+
+socket.on('locationMessage', (locdata) => {
+    console.log(locdata)
+    const html = Mustache.render(locTemp, {locurl: locdata.url, createdAt: moment(locdata.createdAt).format('h:mm A')})
     $('#messages').append(html)
 })
 

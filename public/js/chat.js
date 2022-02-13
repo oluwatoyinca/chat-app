@@ -3,6 +3,7 @@ const socket = io()
 // const messageTemp = $('message-temp').html()
 const messageTemp = document.querySelector('#message-temp').innerHTML
 const locTemp = document.querySelector('#loc-temp').innerHTML
+const sideTemp = document.querySelector('#sidebar-temp').innerHTML
 
 //Options
 const {username, room} = Qs.parse(location.search, {ignoreQueryPrefix: true})
@@ -17,6 +18,11 @@ socket.on('locationMessage', (locdata) => {
     console.log(locdata)
     const html = Mustache.render(locTemp, {username: message.username, locurl: locdata.url, createdAt: moment(locdata.createdAt).format('h:mm A')})
     $('#messages').append(html)
+})
+
+socket.on('roomData', ({room, users}) => {
+    const html = Mustache.render(sideTemp, {room, users})
+    $('#sidebarr').html(html)
 })
 
 $('form').on('submit', (e) => {

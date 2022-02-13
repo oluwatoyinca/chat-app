@@ -34,6 +34,11 @@ io.on('connection', (socket) => {
         //below code is used to send the message (or emit message) to every connection in the specified room except this particuar connection/socket.
         //i'e sending to io except socket
         socket.broadcast.to(user.room).emit('message', generateMessage('System', `${user.username} has joined`))
+        io.to(user.room).emit('roomData', {
+            room: user.room,
+            users: getUsersInRoom(user.room)
+        })
+
         callback()
     })
 
@@ -64,6 +69,10 @@ io.on('connection', (socket) => {
 
         if(user) {
             io.to(user.room).emit('message', generateMessage('System', `${user.username} has left`))
+            io.to(user.room).emit('roomData', {
+                room: user.room,
+                users: getUsersInRoom(user.room)
+            })
         }
     })
 })

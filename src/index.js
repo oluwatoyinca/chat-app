@@ -4,6 +4,7 @@ const express = require('express')
 const socketio = require('socket.io')
 const Filter = require('bad-words')
 const { generateMessage, generateLocMessage } = require('./utilities/messages')
+const { addUser, removeUser, getUser, getUsersInRoom } = require('./utilities/users')
 
 const app = express()
 //server is created so it can be passed into seocketio() as we can't use the one express creates
@@ -19,35 +20,51 @@ io.on('connection', (socket) => {
     //message on successful connection
     console.log('New WebSocket connection')
 
-    socket.on('join', ({username, room} = {}) => {
-        socket.join(room)
+    socket.on('join', (options = {}, callback) => {
+        const {error, user} = addUser({id: socket.id, ...options})
 
-        socket.emit('message', generateMessage('Welcome!'))
+        if (error)
+        {
+            return callback(error)
+        }
+
+        socket.join(user.room)
+
+        socket.emit('message', generateMessage('System', 'Welcome!'))
         //below code is used to send the message (or emit message) to every connection in the specified room except this particuar connection/socket.
         //i'e sending to io except socket
-        socket.broadcast.to(room).emit('message', generateMessage(`${username} has joined`))
+        socket.broadcast.to(user.room).emit('message', generateMessage('System', `${user.username} has joined`))
+        callback()
     })
 
     socket.on('sendMessage', (mess, callback) => {
+        const user = getUser(socket.id)
+
         const filter = new Filter()
 
         if(filter.isProfane(mess)) {
             return callback('Profanity is not allowed!')
         }
 
-        io.to('Them').emit('message', generateMessage(mess))
+        io.to(user.room).emit('message', generateMessage(user.username, mess))
         callback()
     })
 
     socket.on('sendLocation', ({latitude, longitude} = {}, callback) => {
+        const user = getUser(socket.id)
+
         const loc = `https://google.com/maps?q=${longitude},${latitude}`
-        io.emit('locationMessage', generateLocMessage(loc))
+        io.to(user.room).emit('locationMessage', generateLocMessage(user.username, loc))
         callback()
     })
 
     //below code runs when a client/connection/socket is disconnected
     socket.on('disconnect', () => {
-        io.emit('message', generateMessage('A user has left'))
+        const user = removeUser(socket.id)
+
+        if(user) {
+            io.to(user.room).emit('message', generateMessage('System', `${user.username} has left`))
+        }
     })
 })
 

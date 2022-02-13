@@ -4,6 +4,9 @@ const socket = io()
 const messageTemp = document.querySelector('#message-temp').innerHTML
 const locTemp = document.querySelector('#loc-temp').innerHTML
 
+//Options
+const {username, room} = Qs.parse(location.search, {ignoreQueryPrefix: true})
+
 socket.on('message', (message) => {
     console.log(message)
     const html = Mustache.render(messageTemp, {message: message.text, createdAt: moment(message.createdAt).format('h:mm A')})
@@ -55,3 +58,5 @@ $('#location').on('click', () => {
         })
     })
 })
+
+socket.emit('join', {username, room})

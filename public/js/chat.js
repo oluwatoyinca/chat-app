@@ -8,16 +8,33 @@ const sideTemp = document.querySelector('#sidebar-temp').innerHTML
 //Options
 const {username, room} = Qs.parse(location.search, {ignoreQueryPrefix: true})
 
+const autoscroll = () => {
+    //Height of new message element
+    const heg= parseInt($('#messages').children().last().css('marginBottom')) + $('#messages').children().last().outerHeight()
+    //Visible height of messages container
+    const visibleHeight = parseInt($('#messages').outerHeight())
+    //Height of messages container
+    const contHeight = $('#messages').prop('scrollHeight')
+    //How far have I scrolled
+    const scrollOffset = parseInt($('#messages').scrollTop()) + visibleHeight
+
+    if (contHeight - heg <= scrollOffset) {
+        $('#messages').scrollTop($('#messages').prop('scrollHeight'))
+    }
+}
+
 socket.on('message', (message) => {
     console.log(message)
     const html = Mustache.render(messageTemp, {username: message.username, message: message.text, createdAt: moment(message.createdAt).format('h:mm A')})
     $('#messages').append(html)
+    autoscroll()
 })
 
 socket.on('locationMessage', (locdata) => {
     console.log(locdata)
     const html = Mustache.render(locTemp, {username: message.username, locurl: locdata.url, createdAt: moment(locdata.createdAt).format('h:mm A')})
     $('#messages').append(html)
+    autoscroll()
 })
 
 socket.on('roomData', ({room, users}) => {
